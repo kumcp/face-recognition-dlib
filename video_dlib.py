@@ -2,18 +2,24 @@ import numpy as np
 import cv2
 import dlib
 import json
+
+from performance_measure import measure_time
 from create_facedata import import_vector_face
+import time 
 
 cap = cv2.VideoCapture(0)
 
 predictor_path = './shape_predictor_5_face_landmarks.dat'
 face_rec_model_path = './dlib_face_recognition_resnet_model_v1.dat'
 
-detector = dlib.get_frontal_face_detector()
+
+# detector = dlib.get_frontal_face_detector()
+detector = dlib.cnn_face_detection_model_v1('./mmod_human_face_detector.dat')
+
 sp = dlib.shape_predictor(predictor_path)
 facerec = dlib.face_recognition_model_v1(face_rec_model_path)
 
-skipframe = 30
+skipframe = 10
 
 jsonfile = open("./recognized-faces/label_map.json")
     
@@ -35,11 +41,19 @@ def detect_realtime():
             # Our operations on the frame come here
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+            start_time = time.time()
             dets = detector(frame, 1)
+            end_time = time.time()
+
+            print("Detecting takes: %f ms \n" % ((end_time-start_time) *1000) )
 
             new_faces = []
 
             for k, d in enumerate(dets):
+                # Remove this line if using get_frontal_face_detector()
+                d = d.rect
+                #######
+                
                 shape = sp(frame, d)
                 face_descriptor = facerec.compute_face_descriptor(frame, shape)
                 name = find_same_face(face_descriptor)
@@ -69,6 +83,7 @@ def detect_realtime():
     cap.release()
     cv2.destroyAllWindows()
 
+@measure_time
 def find_same_face(face_descriptor):
     recognized_faces = import_vector_face()
 
@@ -79,7 +94,7 @@ def find_same_face(face_descriptor):
 
     for face_name in recognized_faces:
         loss = np.sum((face_vector - np.array(recognized_faces[face_name])) ** 2)
-        print(loss)
+        # print(loss)
         if loss < min_loss:
             min_loss = loss
             most_likely_face = label_map[face_name]
