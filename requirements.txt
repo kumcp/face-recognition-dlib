@@ -136,7 +136,7 @@ vboxapi==1.0
 virtualenv==1.11.4
 wcwidth==0.1.7
 websocket-client==0.40.0
-Werkzeug==0.12.2
+Werkzeug==0.15.3
 widgetsnbextension==3.0.3
 wrapt==1.10.10
 zope.interface==4.0.5
